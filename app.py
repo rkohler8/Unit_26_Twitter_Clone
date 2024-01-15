@@ -258,6 +258,25 @@ def delete_user():
     return redirect("/signup")
 
 
+# Add a new feature that allows a user to “like” a warble. They should only be able to like warbles written by other users. 
+# They should put a star (or some other similar symbol) next to liked warbles.
+
+# They should be able to unlike a warble, by clicking on that star.
+
+# On a profile page, it should show how many warblers that user has liked, and this should link to a page showing their liked warbles.
+@app.route('/users/<int:user_id>/likes', methods=["GET"])
+def show_likes(user_id):
+    """Show number of likes on User page"""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    
+    user = User.query.get_or_404(user_id)
+
+    return render_template('users/likes.html', user=user)
+
+
 ##############################################################################
 # Messages routes:
 
@@ -305,6 +324,39 @@ def messages_destroy(message_id):
     db.session.commit()
 
     return redirect(f"/users/{g.user.id}")
+
+
+# Add a new feature that allows a user to “like” a warble. They should only be able to like warbles written by other users. 
+# They should put a star (or some other similar symbol) next to liked warbles.
+
+# They should be able to unlike a warble, by clicking on that star.
+
+# On a profile page, it should show how many warblers that user has liked, and this should link to a page showing their liked warbles.
+@app.route('/messages/<int:message_id>/like', methods=["POST"])
+def add_like(message_id):
+    """Add or remove a like on a message"""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+    
+    liked_message = Message.query.get_or_404(message_id)
+
+    if liked_message.user_id == g.user.id:
+        flash(f"You can't like your own message!", "warning")
+        return redirect("/")
+
+    if liked_message in g.user.likes:
+        g.user.likes = [like for like in g.user.likes if like != liked_message]
+        flash(f"Unliked message!", "warning")
+    else:
+        g.user.likes.append(liked_message)
+        flash(f"Liked message!", "success")
+    
+    db.session.commit()
+
+    return redirect("/")
+
 
 
 ##############################################################################
