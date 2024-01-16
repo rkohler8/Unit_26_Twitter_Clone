@@ -2,7 +2,9 @@
 
 # run these tests like:
 #
-#    python -m unittest test_user_model.py
+#   python -m unittest test_user_model.py
+#   ↓ Use this so it doesn't run Debug Toolbar ↓
+#   FLASK_ENV=production python -m unittest test_user_model.py
 
 
 import os
@@ -114,6 +116,7 @@ class UserModelTestCase(TestCase):
         self.assertFalse(self.user1.is_followed_by(self.user2))
 
     
+    ### Sign Up Tests
 
     def test_valid_signup(self):
         u_test = User.signup("test_signup_user", "test_signup@email.com", "pass1", "")
@@ -144,8 +147,23 @@ class UserModelTestCase(TestCase):
             db.session.commit()
 
     def test_invalid_password_signup(self):
-        invalid = User.signup(None, "test_signup@email.com", "pass1", "")
-        uid = 123456
-        invalid.id = uid
-        with self.assertRaises(exc.IntegrityError) as context:
-            db.session.commit()
+        with self.assertRaises(ValueError) as context:
+            User.signup("test_signup_user", "test_signup@email.com", "", None)
+        
+        with self.assertRaises(ValueError) as context:
+            User.signup("test_signup_user", "test_signup@email.com", None, None)
+
+
+### Authentication Tests
+            
+
+    def test_valid_authentication(self):
+        auth_user = User.authenticate(self.user1.username, "pass1")
+        self.assertIsNotNone(auth_user)
+        self.assertEqual(auth_user.id, self.user_id1)
+    
+    def test_invalid_username(self):
+        self.assertFalse(User.authenticate("badusername", "password"))
+
+    def test_wrong_password(self):
+        self.assertFalse(User.authenticate(self.user1.username, "badpassword"))
